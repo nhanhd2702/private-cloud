@@ -1,0 +1,1 @@
+V	330128035301Z		1000	unknown	/C=VN/ST=Southeast/O=Honeynet/OU=Octavia/CN=ServerIntermediateCA
