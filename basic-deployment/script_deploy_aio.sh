@@ -2,9 +2,13 @@
 #Define variables
 
 cinder_volumes_disk="/dev/sdb"
-network_if="ens160"
-neutron_ext_if="ens192"
+int_if="ens160"
 int_vip_address="192.168.100.10"
+ext_if="ens192"
+# neutron_ext_net_cidr="192.168.200.0/24"
+# neutron_ext_net_range_start="192.168.200.100"
+# neutron_ext_net_range_end="192.168.200.199"
+# neutron_ext_net_gw="192.168.200.1"
 
 #Check privilege 
 die() {
@@ -19,10 +23,12 @@ apt autoremove -y
 timedatectl set-timezone Asia/Ho_Chi_Minh
 #Checking cinders-volume
 if vgdisplay | grep -q 'cinder-volumes'; then
-  echo "Ch"
+  echo "Checking cinder-volumes is OK"
 else
-  echo "Storage not found. Please create cinder-volumes to continue... "
-  exit 1;
+	echo "Storage not found, Now we will setup cinder-volumes"
+mkfs.ext4 $cinder_volumes_disk
+pvcreate $cinder_volumes_disk
+vgcreate cinder-volumes $cinder_volumes_disk
 fi
 
 #Install python libraries & packages
@@ -69,20 +75,37 @@ cp all-in-one all-in-one.bak
 cp globals.yml globals.bak
 # Git clone config file template
 cd ~
+git config --global user.name "nhanhd2702"
+git config --global user.email "nhanhd2702@gmail.com"
+git config  --global user.passwd "y"
 git clone https://github.com/nhanhd2702/private-cloud-templates.git
-cp private-cloud-templates/all-in-one-basic/all-in-one /etc/kolla/
-cp private-cloud-templates/all-in-one-basic/globals.yml /etc/kolla/
+cd private-cloud-templates
+git pull origin base
+cd ..
+cp private-cloud-templates/aio/all-in-one /etc/kolla/
+cp private-cloud-templates/aio/globals.yml /etc/kolla/
 #Update globals.yml 
-sed -i 's/$network_if/int_if/' /etc/kolla/globals.yml
-sed -i 's/$neutron_ext_if/ext_if/' /etc/kolla/globals.yml
-sed -i 's/$int_vip_address/int_vip_ip/' /etc/kolla/globals.yml
+echo "Updating configs"
+sed -i "s/int_if/$int_if/" /etc/kolla/globals.yml
+sed -i "s/ext_if/$ext_if/" /etc/kolla/globals.yml
+sed -i "s/int_vip_ip/$int_vip_address/" /etc/kolla/globals.yml
+
 #
 #Generate setup passwords
+echo "Generate module passwords"
 kolla-genpwd
 ## Deployment
 byobu
 source $HOME/private-cloud/bin/activate
 kolla-ansible -i /etc/kolla/all-in-one bootstrap-servers
 kolla-ansible -i /etc/kolla/all-in-one prechecks
-
+#kolla-ansible -i /etc/kolla/all-in-one deploy
+# Post deploy
+#kolla-ansible post-deploy
+#pip install python-openstackclient python-glanceclient python-neutronclient
+# #Create token & resources
+# source /etc/kolla/admin-openrc.sh
+# openstack token issue
+# admin_password=cat /etc/kolla/passwords.yml | grep keystone_admin
+# echo "Deployment is complete. Password login is $admin_password"
 
