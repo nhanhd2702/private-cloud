@@ -39,6 +39,9 @@ apt install python3-venv python3-virtualenv -y
 #Create virtual environment
 if [ ! -d "$HOME/private-cloud" ]; then
 python3 -m venv $HOME/private-cloud
+else
+	rm -rf "$HOME/private-cloud"
+	python3 -m venv $HOME/private-cloud
 fi
 # Activate virtual environment
 source $HOME/private-cloud/bin/activate
