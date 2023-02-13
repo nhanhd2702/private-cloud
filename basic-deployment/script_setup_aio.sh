@@ -2,7 +2,7 @@
 
 echo "###############################################################"
 echo "#                                                             #"
-echo "#  You are about to deploy a private-cloud all-in-one system. #"
+echo "#  You are about to setup a private-cloud all-in-one system.  #"
 echo "#  Press [ENTER] to start the installation process            #"
 echo "#  or press [CTRL+C] to exit                                  #"
 echo "#                                                             #"
