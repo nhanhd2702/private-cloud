@@ -168,7 +168,7 @@ kolla-genpwd
 echo "+--------------------------------------------------------+"
 echo "|                                                        |"
 echo "|  Preparation is complete.                              |"
-echo "|  Please run the installation script to continue.       |"
+echo "|  Please run the deployment script to continue.         |"
 echo "|                                                        |"
 echo "+--------------------------------------------------------+"
 echo "Press Enter to continue."
