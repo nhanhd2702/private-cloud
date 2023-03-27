@@ -24,22 +24,25 @@ die() {
 [ $(whoami) = "root" ] || die "This script must be run as root"
 
 # Servers definition
+declare -a neutron_int_if_array
+declare -a neutron_ext_if_array
+config_line=""
 echo "Enter the number of servers: "
 read num_servers
 
-for ((i=1; i<=num_servers; i++))
+for ((i=1;i<=$num_servers;i++))
 do
-    echo "Enter the name of server $i: "
-    read server_name
-    echo "Enter the IP address of server $i: "
-    read server_ip
+    read -p "Enter the name of server $i: " sv_host
+    read -p "Enter the IP address of server $i: " sv_ip
 
     # Prompt for the network interface and neutron external interface
-    echo "Enter the network interface for server $i: "
-    read int_if
-    echo "Enter the neutron external interface for server $i: "
-    read neutron_ext_if
+    read -p "Enter the network interface for server $i: " neutron_int_if
+    read -p "Enter the neutron external interface for server $i: " neutron_ext_if
+    neutron_int_if_array[$i]=$neutron_int_if
+    neutron_ext_if_array[$i]=$neutron_ext_if
+    config_line="$config_line\n$sv_host ansible_ssh_host=$sv_ip ansible_connection=ssh ansible_user=honeynet ansible_sudo_pass=honeynet.vn"
 done
+read -p "Enter Internal VIP Address: " int_vip_address
 
 ##Update system packages
 echo "Updating your system packages"
@@ -131,32 +134,28 @@ cd $HOME
 git clone https://github.com/nhanhd2702/private-cloud-templates.git
 cp private-cloud-templates/libs/multinode/multinode /etc/kolla/
 cp private-cloud-templates/libs/multinode/globals.yml /etc/kolla/
-cp private-cloud-templates/config /etc/kolla/
+cp -R private-cloud-templates/config /etc/kolla/
 
 #Edit inventory file
 echo "Append the servers to the inventory file"
 ## Append the servers to the /etc/kolla/multinode file
-for ((i=1; i<=num_servers; i++))
-do
-sudo sed -i "1i$sv_host ansible_ssh_host=$sv_ip ansible_connection=ssh ansible_user=honeynet ansible_sudo_pass=honeynet.vn network_interface=$sv_int_if neutron_external_interface=$sv_ext_if" /etc/kolla/multinode
-done
+sed -i "1i$config_line" /etc/kolla/multinode && sed -i "1s/^n//" /etc/kolla/multinode
 
 #Update globals.yml 
 echo "Update global variables"
-sed -i "s/int_if/$network_if/" /etc/kolla/globals.yml
-sed -i "s/ext_if/$neutron_ext_if/" /etc/kolla/globals.yml
+sed -i "s/int_if/${neutron_int_if_array[1]}/" /etc/kolla/globals.yml
+sed -i "s/ext_if/${neutron_ext_if_array[1]}/" /etc/kolla/globals.yml
 sed -i "s/int_vip_ip/$int_vip_address/" /etc/kolla/globals.yml
 #
 ##Generate setup passwords
 #kolla-genpwd
 
 ## Finish pre-config for openstack 
-echo "+--------------------------------------------------------+"
-echo "|                                                        |"
-echo "|  Preparation is complete.                              |"
-echo "|  Please check the multinode & globals file             |"
-echo "|  before deploy...                                      |"
-echo "|                                                        |"
-echo "+--------------------------------------------------------+"
+echo "+---------------------------------------------------------+"
+echo "|                                                         |"
+echo "| Preparation is complete.                                |"
+echo "| Please check the multinode & globals file before deploy |"
+echo "|                                                         |"
+echo "+---------------------------------------------------------+"
 echo "Press Enter to continue."
 read -p ""
