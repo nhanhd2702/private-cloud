@@ -1,40 +1,34 @@
 #!/bin/bash
 
-echo "###############################################################"
-echo "#                                                             #"
-echo "#  You are about to setup a private-cloud all-in-one system.  #"
-echo "#  Press [ENTER] to start the installation process            #"
-echo "#  or press [CTRL+C] to exit                                  #"
-echo "#                                                             #"
-echo "###############################################################"
-
-# Wait for the user to press [ENTER]
-read
-
-# Start the installation process
-echo "Starting the installation process..."
-
-##Define variables
-
-echo "Enter Internal Network Interface Name (Example: ens160)"
-read network_if
-
-echo "Enter External Network Interface Name (Example: ens192)"
-read neutron_ext_if
-
-echo "Enter Internal VIP Address (Example: 192.168.10.10)" 
-read int_vip_address
-
-##Check privilege 
+##CHECK PRIVILEGES
 echo "Checking privileges"
 die() {
   echo "ERROR: $1"
   exit 1
 }
-
 [ $(whoami) = "root" ] || die "This script must be run as root"
 
-##Create cinder volumes
+#Start the installation process
+echo "Starting the installation process..."
+
+##DEFINE VARIABLES
+
+#Set hostname
+read -p "Enter the new server name: " new_server_name
+hostnamectl set-hostname "$new_server_name"
+
+#Set interfaces
+echo "Enter Internal Network Interface Name (Example: ens160)"
+read neutron_int_if
+
+echo "Enter External Network Interface Name (Example: ens192)"
+read neutron_ext_if
+
+echo "Enter Internal VIP Address (Example: 192.168.10.10)" 
+read int_vip_addr
+
+##CREATE CINDER VOLUME
+
 #Check cinder-volumes is exist
 echo "Checking cinder-volumes"
 if ! vgdisplay | grep -q "cinder-volumes"; then
@@ -63,10 +57,16 @@ else
         echo "Cinder-volumes is ready for deploy"
 fi
 
-##Update system packages
+##UPDATE SYSTEM PACKAGES
+
+#Update repositories
 echo "Updating your system packages"
 
 apt update && sudo apt upgrade -y
+
+apt-get install apt-transport-https ca-certificates -y
+
+update-ca-certificates
 
 apt autoremove -y
 
@@ -76,7 +76,6 @@ echo "Setting date & time"
 timedatectl set-timezone Asia/Ho_Chi_Minh
 
 #Install python libraries & packages
-
 echo "Install python libraries & packages"
 apt install python3-pip python3-dev python3-docker libffi-dev gcc libssl-dev git -y
 
@@ -105,7 +104,7 @@ pip install -U pip
 pip install -U 'ansible>=4,<6'
 
 #Install kolla-ansible and its dependencies using pip
-pip install "kolla-ansible==15.0.0"
+pip install "kolla-ansible==15.2.0"
 
 #pip install git+https://opendev.org/openstack/kolla-ansible@stable/zed
 
@@ -156,9 +155,9 @@ cp private-cloud-templates/libs/aio/globals.yml /etc/kolla/
 
 #Update globals.yml 
 echo "Update global variables"
-sed -i "s/int_if/$network_if/" /etc/kolla/globals.yml
+sed -i "s/int_if/$neutron_int_if/" /etc/kolla/globals.yml
 sed -i "s/ext_if/$neutron_ext_if/" /etc/kolla/globals.yml
-sed -i "s/int_vip_ip/$int_vip_address/" /etc/kolla/globals.yml
+sed -i "s/int_vip_ip/$int_vip_addr/" /etc/kolla/globals.yml
 #
 ##Generate setup passwords
 echo "Generate setup passwords"
