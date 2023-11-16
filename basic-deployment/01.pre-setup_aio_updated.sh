@@ -144,8 +144,8 @@ chown "$USER":"$USER" /etc/kolla
 
 # Copy config template files
 echo "Copying config template files"
-cp -r "$HOME/private-cloud/share/kolla-ansible/etc_examples/kolla/"* /etc/kolla/
-cp -r "$HOME/private-cloud/share/kolla-ansible/ansible/inventory/"* /etc/kolla/
+cp -r $HOME/private-cloud/share/kolla-ansible/etc_examples/kolla/* /etc/kolla/
+cp -r $HOME/private-cloud/share/kolla-ansible/ansible/inventory/* /etc/kolla/
 
 # Backup original config files
 echo "Backing up config files"
