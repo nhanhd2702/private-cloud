@@ -13,6 +13,9 @@ die() {
 declare -a neutron_int_if_array
 declare -a neutron_ext_if_array
 config_line=""
+echo "Enter SSH Login Username for Setup SSH Keygen (example: admin): "
+read -r login_name
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 echo "Enter the number of servers: "
 read -r num_servers
 
@@ -27,21 +30,10 @@ do
     neutron_int_if_array[i]=$neutron_int_if
     neutron_ext_if_array[i]=$neutron_ext_if
     config_line="$config_line\n$sv_host ansible_ssh_host=$sv_ip ansible_connection=ssh ansible_user=honeynet ansible_sudo_pass=honeynet.vn network_interface=$neutron_int_if neutron_external_interface=$neutron_ext_if"
-done
-read -r -p "Enter Internal VIP Address (example: 192.168.10.100): " int_vip_address
-
-
-# Generate an SSH key pair (without a passphrase)
-echo "Enter SSH Login Username (example: admin): "
-read -r login_name
-
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
-
-# Copy the SSH public key to the user's authorized_keys file
-for ((i=1; i<=num_servers; i++))
-do
+    echo "Add SSH keygen to server $i"
     ssh-copy-id -i ~/.ssh/id_rsa.pub "$login_name"@"${sv_host[$i]}"
 done
+read -r -p "Enter Internal VIP Address (example: 192.168.10.100): " int_vip_address
 
 ## Update system packages
 echo "Updating your system packages"
