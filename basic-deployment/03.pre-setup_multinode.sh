@@ -26,7 +26,7 @@ do
     read -r -p "Enter the neutron external interface for server $i (example: ens192): " neutron_ext_if
     neutron_int_if_array[i]=$neutron_int_if
     neutron_ext_if_array[i]=$neutron_ext_if
-    config_line="$config_line\n$sv_host ansible_ssh_host=$sv_ip ansible_connection=ssh ansible_user=honeynet ansible_sudo_pass=honeynet.vn"
+    config_line="$config_line\n$sv_host ansible_ssh_host=$sv_ip ansible_connection=ssh ansible_user=honeynet ansible_sudo_pass=honeynet.vn network_interface=$neutron_int_if neutron_external_interface=$neutron_ext_if"
 done
 read -r -p "Enter Internal VIP Address (example: 192.168.10.100): " int_vip_address
 
