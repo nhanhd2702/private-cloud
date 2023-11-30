@@ -40,7 +40,7 @@ ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 # Copy the SSH public key to the user's authorized_keys file
 for ((i=1; i<=num_servers; i++))
 do
-    ssh-copy-id -i ~/.ssh/id_rsa.pub "$login_name@$sv_host"
+    ssh-copy-id -i ~/.ssh/id_rsa.pub "$login_name@${sv_host[i]}"
 done
 
 ## Update system packages
