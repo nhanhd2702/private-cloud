@@ -33,14 +33,14 @@ read -r -p "Enter Internal VIP Address (example: 192.168.10.100): " int_vip_addr
 
 # Generate an SSH key pair (without a passphrase)
 echo "Enter SSH Login Username: (example: admin)"
-read -r login_name
+read -r -p login_name
 
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 
 # Copy the SSH public key to the user's authorized_keys file
 for ((i=1; i<=num_servers; i++))
 do
-    ssh-copy-id -i ~/.ssh/id_rsa.pub "$login_name"@"$sv_host[i]"
+    ssh-copy-id -i ~/.ssh/id_rsa.pub "$login_name@$sv_host"
 done
 
 ## Update system packages
