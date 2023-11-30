@@ -32,8 +32,7 @@ read -r -p "Enter Internal VIP Address (example: 192.168.10.100): " int_vip_addr
 
 
 # Generate an SSH key pair (without a passphrase)
-echo "Enter SSH Login Username: (example: admin)"
-read -r -p login_name
+read -p -r "Enter SSH Login Username: (example: admin) " login_name
 
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 
