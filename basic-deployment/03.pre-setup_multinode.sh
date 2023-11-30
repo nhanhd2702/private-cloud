@@ -18,25 +18,29 @@ read -r num_servers
 
 for ((i=1; i<=num_servers; i++))
 do
-    read -r -p "Enter the name of server $i: " sv_host
-    read -r -p "Enter the IP address of server $i: " sv_ip
+    read -r -p "Enter the name of server $i: (example: serv-01)" sv_host
+    read -r -p "Enter the IP address of server $i: (example: 192.168.10.1) " sv_ip
 
     # Prompt for the network interface and neutron external interface
-    read -r -p "Enter the network interface for server $i: " neutron_int_if
-    read -r -p "Enter the neutron external interface for server $i: " neutron_ext_if
+    read -r -p "Enter the network interface for server $i: (example: ens160) " neutron_int_if
+    read -r -p "Enter the neutron external interface for server $i: (example: ens192)" neutron_ext_if
     neutron_int_if_array[i]=$neutron_int_if
     neutron_ext_if_array[i]=$neutron_ext_if
     config_line="$config_line\n$sv_host ansible_ssh_host=$sv_ip ansible_connection=ssh ansible_user=honeynet ansible_sudo_pass=honeynet.vn"
 done
 read -r -p "Enter Internal VIP Address: " int_vip_address
 
+
 # Generate an SSH key pair (without a passphrase)
+echo "Enter SSH Login Username: (example: admin)"
+read -r login_name
+
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 
 # Copy the SSH public key to the user's authorized_keys file
 for ((i=1; i<=num_servers; i++))
 do
-    ssh-copy-id -i ~/.ssh/id_rsa.pub "$sv_host"
+    ssh-copy-id -i ~/.ssh/id_rsa.pub "$login_name@$sv_host"
 done
 
 ## Update system packages
@@ -110,8 +114,8 @@ chown "$USER:$USER" /etc/kolla
 
 # Copy file config template
 echo "Copying config template files"
-cp -r "$HOME/private-cloud/share/kolla-ansible/etc_examples/kolla/*" /etc/kolla/
-cp -r "$HOME/private-cloud/share/kolla-ansible/ansible/inventory/*" /etc/kolla/
+cp -r $HOME/private-cloud/share/kolla-ansible/etc_examples/kolla/* /etc/kolla/
+cp -r $HOME/private-cloud/share/kolla-ansible/ansible/inventory/* /etc/kolla/
 
 # Backup original config files
 echo "Backing up config files"
