@@ -1,19 +1,5 @@
 #!/bin/bash
 
-echo "###############################################################"
-echo "#                                                             #"
-echo "#  You are about to set up a private-cloud multinode system.   #"
-echo "#  Press [ENTER] to start the installation process            #"
-echo "#  or press [CTRL+C] to exit                                  #"
-echo "#                                                             #"
-echo "###############################################################"
-
-# Wait for the user to press [ENTER]
-read -r
-
-# Start the installation process
-echo "Starting the installation process..."
-
 ## Check privilege
 echo "Checking privileges"
 die() {
