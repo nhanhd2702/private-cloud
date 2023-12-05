@@ -155,9 +155,9 @@ cp globals.yml globals.bak
 
 ## Git clone config file template
 echo "Clone config template files"
-[ -d "/tmp/private-cloud-templates" ] && rm -rf "/tmp/private-cloud-templates" && git clone https://github.com/nhanhd2702/private-cloud-templates.git
-cp /tmp/private-cloud-templates/basic-deployment/libs/aio/all-in-one /etc/kolla/
-cp /tmp/private-cloud-templates/basic-deployment/libs/aio/globals.yml /etc/kolla/
+[ -d "/usr/local/private-cloud-templates" ] && rm -rf "/usr/local/private-cloud-templates" && git clone https://github.com/nhanhd2702/private-cloud-templates.git
+cp /usr/local/private-cloud-templates/basic-deployment/libs/aio/all-in-one /etc/kolla/
+cp /usr/local/private-cloud-templates/basic-deployment/libs/aio/globals.yml /etc/kolla/
 
 # Update globals.yml
 echo "Update global variables"
