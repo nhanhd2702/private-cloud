@@ -15,4 +15,4 @@ network_vlan_ranges = physnet1:1:100
 EOF
 
 #Reconfigure neutron service
-kolla-ansible -i /etc/kolla/multinode reconfigure -t neutron
+kolla-ansible -i /etc/kolla/multinode reconfigure -t neutron,common
