@@ -155,15 +155,11 @@ cp globals.yml globals.bak
 
 ## Git clone config file template
 echo "Clone config template files"
-
-# Check if the directory "/usr/local/private-cloud-templates" exists
-# If it does, remove it and its contents, then clone the Git repository
-[ -d "/usr/local/private-cloud-templates" ] && rm -rf "/usr/local/private-cloud-templates" && git clone https://github.com/nhanhd2702/private-cloud-templates.git
-
-# Copy the necessary files from the cloned repository to /etc/kolla/
+cd /usr/local || exit
+[ -d "private-cloud-templates" ] && rm -rf "/usr/local/private-cloud-templates"
+git clone https://github.com/nhanhd2702/private-cloud-templates.git
 cp /usr/local/private-cloud-templates/basic-deployment/libs/aio/all-in-one /etc/kolla/
 cp /usr/local/private-cloud-templates/basic-deployment/libs/aio/globals.yml /etc/kolla/
-
 
 # Update globals.yml
 echo "Update global variables"
