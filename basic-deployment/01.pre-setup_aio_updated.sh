@@ -25,8 +25,8 @@ read -r neutron_int_if
 echo "Enter External Network Interface Name (Example: ens192)"
 read -r neutron_ext_if
 
-echo "Enter Internal VIP Address (Example: 192.168.10.10)"
-read -r neutron_vip_address
+# echo "Enter Internal VIP Address (Example: 192.168.10.10)"
+# read -r neutron_vip_address
 
 ##CHECK PRIVILEGES
 echo "Checking privileges"
@@ -165,7 +165,7 @@ cp /usr/local/private-cloud-templates/basic-deployment/libs/aio/globals.yml /etc
 echo "Update global variables"
 sed -i "s/int_if/$neutron_int_if/" /etc/kolla/globals.yml
 sed -i "s/ext_if/$neutron_ext_if/" /etc/kolla/globals.yml
-sed -i "s/int_vip_ip/$neutron_vip_address/" /etc/kolla/globals.yml
+# sed -i "s/int_vip_ip/$neutron_vip_address/" /etc/kolla/globals.yml
 
 ## Generate setup passwords
 echo "Generate setup passwords"
