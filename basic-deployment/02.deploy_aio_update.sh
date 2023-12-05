@@ -5,7 +5,7 @@ if byobu list-sessions 2>&1 | grep -q "no server running"; then
 fi
 
 echo "Byobu is active. Start deploying the private-cloud.."
-source $HOME/private-cloud/bin/activate
+source usr/local/private-cloud/bin/activate
 
 # Functions for command execution and error handling
 execute_command() {
