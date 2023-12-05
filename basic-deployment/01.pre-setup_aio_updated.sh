@@ -94,16 +94,16 @@ echo "Setting up a virtual environment"
 apt install python3-venv python3-virtualenv -y
 
 #Create a virtual environment
-if [ ! -d "$HOME/private-cloud" ]; then
-    python3 -m venv "$HOME"/private-cloud
+if [ ! -d "/usr/local/private-cloud" ]; then
+    python3 -m venv /usr/local/private-cloud
 else
-    rm -rf "$HOME/private-cloud"
-    python3 -m venv "$HOME"/private-cloud
+    rm -rf "/usr/local/private-cloud"
+    python3 -m venv /usr/local/private-cloud
 fi
 
 #Activate the virtual environment
 echo "Activate venv & set up kolla packages"
-source "$HOME"/private-cloud/bin/activate
+source /usr/local/private-cloud/bin/activate
 
 #Upgrade pip tools
 pip install -U pip
@@ -112,7 +112,7 @@ pip install -U pip
 pip install -U 'ansible>=4,<6'
 
 #Install kolla-ansible and its dependencies using pip
-pip install "kolla-ansible==15.2.0"
+pip install "kolla-ansible==15.3.0"
 
 # pip install git+https://opendev.org/openstack/kolla-ansible@stable/zed
 
@@ -144,8 +144,8 @@ chown "$USER":"$USER" /etc/kolla
 
 # Copy config template files
 echo "Copying config template files"
-cp -r $HOME/private-cloud/share/kolla-ansible/etc_examples/kolla/* /etc/kolla/
-cp -r $HOME/private-cloud/share/kolla-ansible/ansible/inventory/* /etc/kolla/
+cp -r /usr/local/private-cloud/share/kolla-ansible/etc_examples/kolla/* /etc/kolla/
+cp -r /usr/local/private-cloud/share/kolla-ansible/ansible/inventory/* /etc/kolla/
 
 # Backup original config files
 echo "Backing up config files"
@@ -155,11 +155,9 @@ cp globals.yml globals.bak
 
 ## Git clone config file template
 echo "Clone config template files"
-cd "$HOME" || exit
-[ -d "private-cloud-templates" ] && rm -rf private-cloud-templates
-git clone https://github.com/nhanhd2702/private-cloud-templates.git
-cp private-cloud-templates/libs/aio/all-in-one /etc/kolla/
-cp private-cloud-templates/libs/aio/globals.yml /etc/kolla/
+[ -d "/tmp/private-cloud-templates" ] && rm -rf "/tmp/private-cloud-templates" && git clone https://github.com/nhanhd2702/private-cloud-templates.git
+cp /tmp/private-cloud-templates/basic-deployment/libs/aio/all-in-one /etc/kolla/
+cp /tmp/private-cloud-templates/basic-deployment/libs/aio/globals.yml /etc/kolla/
 
 # Update globals.yml
 echo "Update global variables"
