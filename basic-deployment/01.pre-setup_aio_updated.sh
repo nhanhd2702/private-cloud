@@ -25,7 +25,7 @@ read -r neutron_int_if
 echo "Enter External Network Interface Name (Example: ens192)"
 read -r neutron_ext_if
 
-echo "Enter Internal VIP Address (Example: 192.168.10.10)"
+echo "Enter Internal Address (Example: 192.168.10.10)"
 read -r neutron_vip_address
 
 ##CHECK PRIVILEGES
