@@ -51,6 +51,7 @@ echo "Adding Storage Metrics..."
 add_config "enable_prometheus_ceph_exporter" "yes"
 add_config "enable_prometheus_external_ceph_mgr_exporter" "no"
 
+source /usr/local/private-cloud/bin/activate
 kolla-ansible -i /etc/kolla/multinode deploy -t prometheus,grafana
 
 
@@ -72,6 +73,7 @@ groups:
       description: "Node memory is filling up (< 10% left)\n  VALUE = {{ \$value }}\n  LABELS = {{ \$labels }}"
   # Add more alert rules as needed
 EOF
+source /usr/local/private-cloud/bin/activate
 kolla-ansible -i /etc/kolla/all-in-one reconfigure -t prometheus,grafana
 
 echo "Setup complete!"
