@@ -1,0 +1,555 @@
+  - alert: ApacheDown
+    expr: apache_up == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Apache down (instance {{ $labels.instance }})
+      description: "Apache down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ApacheWorkersLoad
+    expr: (sum by (instance) (apache_workers{state="busy"}) / sum by (instance) (apache_scoreboard) ) * 100 > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Apache workers load (instance {{ $labels.instance }})
+      description: "Apache workers in busy state approach the max workers count 80% workers busy on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ApacheRestart
+    expr: apache_uptime_seconds_total / 60 < 1
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Apache restart (instance {{ $labels.instance }})
+      description: "Apache has just been restarted.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: HaproxyHighHttp4xxErrorRateBackend
+    expr: ((sum by (proxy) (rate(haproxy_server_http_responses_total{code="4xx"}[1m])) / sum by (proxy) (rate(haproxy_server_http_responses_total[1m]))) * 100) > 5
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy high HTTP 4xx error rate backend (instance {{ $labels.instance }})
+      description: "Too many HTTP requests with status 4xx (> 5%) on backend {{ $labels.fqdn }}/{{ $labels.backend }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyHighHttp5xxErrorRateBackend
+    expr: ((sum by (proxy) (rate(haproxy_server_http_responses_total{code="5xx"}[1m])) / sum by (proxy) (rate(haproxy_server_http_responses_total[1m]))) * 100) > 5
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy high HTTP 5xx error rate backend (instance {{ $labels.instance }})
+      description: "Too many HTTP requests with status 5xx (> 5%) on backend {{ $labels.fqdn }}/{{ $labels.backend }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyHighHttp4xxErrorRateServer
+    expr: ((sum by (server) (rate(haproxy_server_http_responses_total{code="4xx"}[1m])) / sum by (server) (rate(haproxy_server_http_responses_total[1m]))) * 100) > 5
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy high HTTP 4xx error rate server (instance {{ $labels.instance }})
+      description: "Too many HTTP requests with status 4xx (> 5%) on server {{ $labels.server }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyHighHttp5xxErrorRateServer
+    expr: ((sum by (server) (rate(haproxy_server_http_responses_total{code="5xx"}[1m])) / sum by (server) (rate(haproxy_server_http_responses_total[1m]))) * 100) > 5
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy high HTTP 5xx error rate server (instance {{ $labels.instance }})
+      description: "Too many HTTP requests with status 5xx (> 5%) on server {{ $labels.server }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyServerResponseErrors
+    expr: (sum by (server) (rate(haproxy_server_response_errors_total[1m])) / sum by (server) (rate(haproxy_server_http_responses_total[1m]))) * 100 > 5
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy server response errors (instance {{ $labels.instance }})
+      description: "Too many response errors to {{ $labels.server }} server (> 5%).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyBackendConnectionErrors
+    expr: (sum by (proxy) (rate(haproxy_backend_connection_errors_total[1m]))) > 100
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy backend connection errors (instance {{ $labels.instance }})
+      description: "Too many connection errors to {{ $labels.fqdn }}/{{ $labels.backend }} backend (> 100 req/s). Request throughput may be too high.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyServerConnectionErrors
+    expr: (sum by (proxy) (rate(haproxy_server_connection_errors_total[1m]))) > 100
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAProxy server connection errors (instance {{ $labels.instance }})
+      description: "Too many connection errors to {{ $labels.server }} server (> 100 req/s). Request throughput may be too high.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyBackendMaxActiveSession>80%
+    expr: ((haproxy_server_max_sessions >0) * 100) / (haproxy_server_limit_sessions > 0) > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: HAProxy backend max active session > 80% (instance {{ $labels.instance }})
+      description: "Session limit from backend {{ $labels.proxy }} to server {{ $labels.server }} reached 80% of limit - {{ $value | printf \"%.2f\"}}%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyPendingRequests
+    expr: sum by (proxy) (rate(haproxy_backend_current_queue[2m])) > 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: HAProxy pending requests (instance {{ $labels.instance }})
+      description: "Some HAProxy requests are pending on {{ $labels.proxy }} - {{ $value | printf \"%.2f\"}}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyHttpSlowingDown
+    expr: avg by (instance, proxy) (haproxy_backend_max_total_time_seconds) > 1
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: HAProxy HTTP slowing down (instance {{ $labels.instance }})
+      description: "Average request time is increasing - {{ $value | printf \"%.2f\"}}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyRetryHigh
+    expr: sum by (proxy) (rate(haproxy_backend_retry_warnings_total[1m])) > 10
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: HAProxy retry high (instance {{ $labels.instance }})
+      description: "High rate of retry on {{ $labels.proxy }} - {{ $value | printf \"%.2f\"}}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyHasNoAliveBackends
+    expr: haproxy_backend_active_servers + haproxy_backend_backup_servers == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: HAproxy has no alive backends (instance {{ $labels.instance }})
+      description: "HAProxy has no alive active or backup backends for {{ $labels.proxy }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyFrontendSecurityBlockedRequests
+    expr: sum by (proxy) (rate(haproxy_frontend_denied_connections_total[2m])) > 10
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: HAProxy frontend security blocked requests (instance {{ $labels.instance }})
+      description: "HAProxy is blocking requests for security reason\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: HaproxyServerHealthcheckFailure
+    expr: increase(haproxy_server_check_failures_total[1m]) > 0
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: HAProxy server healthcheck failure (instance {{ $labels.instance }})
+      description: "Some server healthcheck are failing on {{ $labels.server }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: MysqlDown
+    expr: mysql_up == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: MySQL down (instance {{ $labels.instance }})
+      description: "MySQL instance is down on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlTooManyConnections(>80%)
+    expr: max_over_time(mysql_global_status_threads_connected[1m]) / mysql_global_variables_max_connections * 100 > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: MySQL too many connections (> 80%) (instance {{ $labels.instance }})
+      description: "More than 80% of MySQL connections are in use on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlHighThreadsRunning
+    expr: max_over_time(mysql_global_status_threads_running[1m]) / mysql_global_variables_max_connections * 100 > 60
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: MySQL high threads running (instance {{ $labels.instance }})
+      description: "More than 60% of MySQL connections are in running state on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlSlaveIoThreadNotRunning
+    expr: mysql_slave_status_master_server_id > 0 and ON (instance) mysql_slave_status_slave_io_running == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: MySQL Slave IO thread not running (instance {{ $labels.instance }})
+      description: "MySQL Slave IO thread not running on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlSlaveSqlThreadNotRunning
+    expr: mysql_slave_status_master_server_id > 0 and ON (instance) mysql_slave_status_slave_sql_running == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: MySQL Slave SQL thread not running (instance {{ $labels.instance }})
+      description: "MySQL Slave SQL thread not running on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlSlaveReplicationLag
+    expr: mysql_slave_status_master_server_id > 0 and ON (instance) (mysql_slave_status_seconds_behind_master - mysql_slave_status_sql_delay) > 30
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: MySQL Slave replication lag (instance {{ $labels.instance }})
+      description: "MySQL replication lag on {{ $labels.instance }}\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlSlowQueries
+    expr: increase(mysql_global_status_slow_queries[1m]) > 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: MySQL slow queries (instance {{ $labels.instance }})
+      description: "MySQL server mysql has some new slow query.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlInnodbLogWaits
+    expr: rate(mysql_global_status_innodb_log_waits[15m]) > 10
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: MySQL InnoDB log waits (instance {{ $labels.instance }})
+      description: "MySQL innodb log writes stalling\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MysqlRestarted
+    expr: mysql_global_status_uptime < 60
+    for: 0m
+    labels:
+      severity: info
+    annotations:
+      summary: MySQL restarted (instance {{ $labels.instance }})
+      description: "MySQL has just been restarted, less than one minute ago on {{ $labels.instance }}.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: RedisDown
+    expr: redis_up == 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis down (instance {{ $labels.instance }})
+      description: "Redis instance is down\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisMissingMaster
+    expr: (count(redis_instance_info{role="master"}) or vector(0)) < 1
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis missing master (instance {{ $labels.instance }})
+      description: "Redis cluster has no node marked as master.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisTooManyMasters
+    expr: count(redis_instance_info{role="master"}) > 1
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis too many masters (instance {{ $labels.instance }})
+      description: "Redis cluster has too many nodes marked as master.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisDisconnectedSlaves
+    expr: count without (instance, job) (redis_connected_slaves) - sum without (instance, job) (redis_connected_slaves) - 1 > 1
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis disconnected slaves (instance {{ $labels.instance }})
+      description: "Redis not replicating for all slaves. Consider reviewing the redis replication status.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisReplicationBroken
+    expr: delta(redis_connected_slaves[1m]) < 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis replication broken (instance {{ $labels.instance }})
+      description: "Redis instance lost a slave\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisClusterFlapping
+    expr: changes(redis_connected_slaves[1m]) > 1
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis cluster flapping (instance {{ $labels.instance }})
+      description: "Changes have been detected in Redis replica connection. This can occur when replica nodes lose connection to the master and reconnect (a.k.a flapping).\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisMissingBackup
+    expr: time() - redis_rdb_last_save_timestamp_seconds > 60 * 60 * 24
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis missing backup (instance {{ $labels.instance }})
+      description: "Redis has not been backuped for 24 hours\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  # The exporter must be started with --include-system-metrics flag or REDIS_EXPORTER_INCL_SYSTEM_METRICS=true environment variable.
+  - alert: RedisOutOfSystemMemory
+    expr: redis_memory_used_bytes / redis_total_system_memory_bytes * 100 > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Redis out of system memory (instance {{ $labels.instance }})
+      description: "Redis is running out of system memory (> 90%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisOutOfConfiguredMaxmemory
+    expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Redis out of configured maxmemory (instance {{ $labels.instance }})
+      description: "Redis is running out of configured maxmemory (> 90%)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisTooManyConnections
+    expr: redis_connected_clients > 100
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Redis too many connections (instance {{ $labels.instance }})
+      description: "Redis instance has too many connections\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisNotEnoughConnections
+    expr: redis_connected_clients < 5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Redis not enough connections (instance {{ $labels.instance }})
+      description: "Redis instance should have more connections (> 5)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RedisRejectedConnections
+    expr: increase(redis_rejected_connections_total[1m]) > 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Redis rejected connections (instance {{ $labels.instance }})
+      description: "Some connections to Redis has been rejected\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: RabbitmqNodeDown
+    expr: sum(rabbitmq_build_info) < 3
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Rabbitmq node down (instance {{ $labels.instance }})
+      description: "Less than 3 nodes running in RabbitMQ cluster\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqNodeNotDistributed
+    expr: erlang_vm_dist_node_state < 3
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Rabbitmq node not distributed (instance {{ $labels.instance }})
+      description: "Distribution link state is not 'up'\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqInstancesDifferentVersions
+    expr: count(count(rabbitmq_build_info) by (rabbitmq_version)) > 1
+    for: 1h
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq instances different versions (instance {{ $labels.instance }})
+      description: "Running different version of Rabbitmq in the same cluster, can lead to failure.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqMemoryHigh
+    expr: rabbitmq_process_resident_memory_bytes / rabbitmq_resident_memory_limit_bytes * 100 > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq memory high (instance {{ $labels.instance }})
+      description: "A node use more than 90% of allocated RAM\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqFileDescriptorsUsage
+    expr: rabbitmq_process_open_fds / rabbitmq_process_max_fds * 100 > 90
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq file descriptors usage (instance {{ $labels.instance }})
+      description: "A node use more than 90% of file descriptors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqTooManyUnackMessages
+    expr: sum(rabbitmq_queue_messages_unacked) BY (queue) > 1000
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq too many unack messages (instance {{ $labels.instance }})
+      description: "Too many unacknowledged messages\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqTooManyConnections
+    expr: rabbitmq_connections > 1000
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq too many connections (instance {{ $labels.instance }})
+      description: "The total connections of a node is too high\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqNoQueueConsumer
+    expr: rabbitmq_queue_consumers < 1
+    for: 1m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq no queue consumer (instance {{ $labels.instance }})
+      description: "A queue has less than 1 consumer\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: RabbitmqUnroutableMessages
+    expr: increase(rabbitmq_channel_messages_unroutable_returned_total[1m]) > 0 or increase(rabbitmq_channel_messages_unroutable_dropped_total[1m]) > 0
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Rabbitmq unroutable messages (instance {{ $labels.instance }})
+      description: "A queue has unroutable messages\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+        - alert: ElasticsearchHeapUsageTooHigh
+    expr: (elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"}) * 100 > 90
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: Elasticsearch Heap Usage Too High (instance {{ $labels.instance }})
+      description: "The heap usage is over 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchHeapUsageWarning
+    expr: (elasticsearch_jvm_memory_used_bytes{area="heap"} / elasticsearch_jvm_memory_max_bytes{area="heap"}) * 100 > 80
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch Heap Usage warning (instance {{ $labels.instance }})
+      description: "The heap usage is over 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchDiskOutOfSpace
+    expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 < 10
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Elasticsearch disk out of space (instance {{ $labels.instance }})
+      description: "The disk usage is over 90%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchDiskSpaceLow
+    expr: elasticsearch_filesystem_data_available_bytes / elasticsearch_filesystem_data_size_bytes * 100 < 20
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch disk space low (instance {{ $labels.instance }})
+      description: "The disk usage is over 80%\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchClusterRed
+    expr: elasticsearch_cluster_health_status{color="red"} == 1
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Elasticsearch Cluster Red (instance {{ $labels.instance }})
+      description: "Elastic Cluster Red status\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchClusterYellow
+    expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch Cluster Yellow (instance {{ $labels.instance }})
+      description: "Elastic Cluster Yellow status\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchHealthyNodes
+    expr: elasticsearch_cluster_health_number_of_nodes < 3
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Elasticsearch Healthy Nodes (instance {{ $labels.instance }})
+      description: "Missing node in Elasticsearch cluster\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchHealthyDataNodes
+    expr: elasticsearch_cluster_health_number_of_data_nodes < 3
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Elasticsearch Healthy Data Nodes (instance {{ $labels.instance }})
+      description: "Missing data node in Elasticsearch cluster\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchRelocatingShards
+    expr: elasticsearch_cluster_health_relocating_shards > 0
+    for: 0m
+    labels:
+      severity: info
+    annotations:
+      summary: Elasticsearch relocating shards (instance {{ $labels.instance }})
+      description: "Elasticsearch is relocating shards\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchRelocatingShardsTooLong
+    expr: elasticsearch_cluster_health_relocating_shards > 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch relocating shards too long (instance {{ $labels.instance }})
+      description: "Elasticsearch has been relocating shards for 15min\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchInitializingShards
+    expr: elasticsearch_cluster_health_initializing_shards > 0
+    for: 0m
+    labels:
+      severity: info
+    annotations:
+      summary: Elasticsearch initializing shards (instance {{ $labels.instance }})
+      description: "Elasticsearch is initializing shards\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchInitializingShardsTooLong
+    expr: elasticsearch_cluster_health_initializing_shards > 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch initializing shards too long (instance {{ $labels.instance }})
+      description: "Elasticsearch has been initializing shards for 15 min\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchUnassignedShards
+    expr: elasticsearch_cluster_health_unassigned_shards > 0
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: Elasticsearch unassigned shards (instance {{ $labels.instance }})
+      description: "Elasticsearch has unassigned shards\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchPendingTasks
+    expr: elasticsearch_cluster_health_number_of_pending_tasks > 0
+    for: 15m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch pending tasks (instance {{ $labels.instance }})
+      description: "Elasticsearch has pending tasks. Cluster works slowly.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: ElasticsearchNoNewDocuments
+    expr: increase(elasticsearch_indices_docs{es_data_node="true"}[10m]) < 1
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: Elasticsearch no new documents (instance {{ $labels.instance }})
+      description: "No new documents for 10 min!\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+
