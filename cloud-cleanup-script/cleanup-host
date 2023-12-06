@@ -1,111 +1,100 @@
 #!/usr/bin/env bash
 
-# Log function
-log() {
-    echo "$(date +"%Y-%m-%d %H:%M:%S"): $1" >> "/tmp/host_cleanup_script.log"
-}
-
-# Error handling function
-handle_error() {
-    echo "Error: $1" >&2
-    exit 1
-}
-
-# Dry run option
-dry_run=false
-
-# Function to execute the command and log
-process_cmd() {
-    log "Executing command: $CMD"
-    if [ "$dry_run" = true ]; then
-        log "Dry run: Skipping actual execution."
-    else
-        if ! $CMD; then
-            handle_error "Failed to execute command: $CMD"
-        fi
-    fi
-}
-
-# Remove artifacts related to neutron agents containers
+# Spawning the neutron agents containers leaves artifacts on the host.
+# This script removes these artifacts.
 ip netns list | while read -r line ; do
-    process_cmd "ip netns delete $line"
+    echo "Removing network namespace $line on the host"
+    ip netns delete $line
 done
 
 ip -o link show | awk -F': ' '/tap/{print $2}' | while read -r ifname ; do
-    process_cmd "ip link delete $ifname type veth"
+    echo "Removing tap interface $ifname on the host"
+    ip link delete $ifname type veth
 done
 
 ip -o link show | awk -F': ' '/brq/{print $2}' | while read -r ifname ; do
-    process_cmd "ip link delete $ifname type bridge"
+    echo "Removing linux bridge $ifname on the host"
+    ip link delete $ifname type bridge
 done
 
 ip -o link show | awk -F': ' '/vxlan/{print $2}' | while read -r ifname ; do
-    process_cmd "ip link delete $ifname type vxlan"
+    echo "Removing vxlan interface $ifname on the host"
+    ip link delete $ifname type vxlan
 done
 
-# Remove VIPs if HAProxy is enabled
+# Keepalived leaves VIP on the host in case of accidental removal.
+# This snippet removes VIPs.
 if [[ "$enable_haproxy" == "yes" ]]; then
-    ip -o addr list | awk '{print $2,$4}' | cut -d/ -f1 | while read -r ifname ifaddr ; do
-        if [[ "$kolla_internal_vip_address" == "$ifaddr" || "$kolla_external_vip_address" == "$ifaddr" ]]; then
-            process_cmd "ip addr delete dev $ifname $ifaddr"
-        fi
-    done
-fi
-
-# Backup fstab
-log "Creating a fstab backup..."
-process_cmd "sudo cp /etc/fstab /etc/fstab_backup"
-
-# Remove Swift references from fstab if Swift is enabled
-if [[ "$enable_swift" == "yes" ]]; then
-    log "Removing swift references from fstab..."
-    process_cmd "cat /etc/fstab | grep '/srv/node/d*' | xargs umount"
-    process_cmd "sed -i '/\/srv\/node\//d' /etc/fstab"
-fi
-
-# Remove custom volumes if customized for various services
-remove_custom_volume() {
-    local service_name="$1"
-    local volume_var="${service_name}_datadir_volume"
-    local volume_path="${!volume_var}"
-    
-    if [[ "${volume_path}" != "${service_name}" && -d "${volume_path}" ]]; then
-        log "Removing ${service_name} volume if it is customized"
-        process_cmd "rm -rfv ${volume_path}"
+  ip -o addr list | awk '{print $2,$4}' | cut -d/ -f1 | while read -r ifname ifaddr ; do
+    if [[ "$kolla_internal_vip_address" == "$ifaddr" ||
+          "$kolla_external_vip_address" == "$ifaddr" ]]; then
+      echo "Removing VIP $ifaddr on the host"
+      ip addr delete dev $ifname $ifaddr
     fi
-}
-
-remove_custom_volume "glance_file"
-remove_custom_volume "nova_instance"
-remove_custom_volume "elasticsearch"
-remove_custom_volume "gnocchi_metric"
-remove_custom_volume "influxdb"
-remove_custom_volume "opensearch"
-
-# Uninstall ovs-dpdk if the ovs-dpdkctl.sh script exists
-ovs_dpdkctl_script="/etc/kolla/ovsdpdk-db/ovs-dpdkctl.sh"
-if [[ -e "$ovs_dpdkctl_script" ]]; then
-    log "Uninstalling ovs-dpdk service files and tools."
-    process_cmd "sudo CONFIG_FILE=$ovs_dpdkctl_script uninstall"
+  done
 fi
 
-# Remove all directories in /etc/kolla except specific ones
-log "Getting folders name..."
-for dir in /etc/kolla/*; do
-    case "$dir" in
-        "/etc/kolla/passwords.yml" | "/etc/kolla/globals.yml" | "/etc/kolla/globals.d" | "/etc/kolla/kolla-build.conf" | "/etc/kolla/config" | "/etc/kolla/certificates")
-            log "Skipping: $dir"
-            ;;
-        *)
-            process_cmd "rm -rfv $dir"
-            ;;
-    esac
+echo "Creating a fstab backup..."
+sudo cp /etc/fstab /etc/fstab_backup
+
+if [[ "$enable_swift" == "yes" ]]; then
+    echo "Removing swift references from fstab..."
+    cat /etc/fstab | grep "/srv/node/d*" | xargs umount
+    sed -i '/\/srv\/node\//d' /etc/fstab
+fi
+
+if [[ "$glance_file_datadir_volume" != "glance" && -d "$glance_file_datadir_volume" ]]; then
+    echo "Removing glance volume if it is customzied"
+    rm -rfv  $glance_file_datadir_volume
+fi
+
+if [[ "$nova_instance_datadir_volume" != "nova_compute" && -d "$nova_instance_datadir_volume" ]]; then
+    echo "Removing nova_compute volume if it is customzied"
+    rm -rfv  $nova_instance_datadir_volume
+fi
+
+if [[ "$elasticsearch_datadir_volume" != "elasticsearch" && -d "$elasticsearch_datadir_volume" ]]; then
+    echo "Removing elasticsearch volume if it is customzied"
+    rm -rfv  $elasticsearch_datadir_volume
+fi
+
+if [[ "$gnocchi_metric_datadir_volume" != "gnocchi" && -d "$gnocchi_metric_datadir_volume" ]]; then
+    echo "Removing gnocchi volume if it is customzied"
+    rm -rfv  $gnocchi_metric_datadir_volume
+fi
+
+if [[ "$influxdb_datadir_volume" != "influxdb" && -d "$influxdb_datadir_volume" ]]; then
+    echo "Removing influxdb volume if it is customzied"
+    rm -rfv  $influxdb_datadir_volume
+fi
+
+if [[ "$opensearch_datadir_volume" != "opensearch" && -d "$opensearch_datadir_volume" ]]; then
+    echo "Removing opensearch volume if it is customzied"
+    rm -rfv  $opensearch_datadir_volume
+fi
+
+FOLDER_PATH="/etc/kolla"
+
+if [[ -e "$FOLDER_PATH/ovsdpdk-db/ovs-dpdkctl.sh" ]]; then
+    echo uninstalling ovs-dpdk service files and tools.
+    sudo CONFIG_FILE="$FOLDER_PATH/ovsdpdk-db/ovs-dpdkctl.conf" $FOLDER_PATH/ovsdpdk-db/ovs-dpdkctl.sh uninstall
+fi
+
+echo "Getting folders name..."
+for dir in $FOLDER_PATH/*; do
+    if [ "$dir" == "$FOLDER_PATH/passwords.yml" ] || \
+       [ "$dir" == "$FOLDER_PATH/globals.yml" ] || \
+       [ "$dir" == "$FOLDER_PATH/globals.d" ] || \
+       [ "$dir" == "$FOLDER_PATH/kolla-build.conf" ] || \
+       [ "$dir" == "$FOLDER_PATH/config" ] || \
+       [ "$dir" == "$FOLDER_PATH/certificates" ]; then
+        echo "Skipping:" $dir
+    else
+        rm -rfv $dir
+    fi
 done
 
-# Remove dev repos if destroy_include_dev is enabled
 if [[ "$destroy_include_dev" == "yes" ]]; then
-    log "Cleaning up dev repos..."
-    process_cmd "rm -rfv ${kolla_dev_repos_directory}"
+    echo "Cleaning up dev repos..."
+    rm -rfv "${kolla_dev_repos_directory}"
 fi
-
-log "Cleanup completed!"
