@@ -90,10 +90,13 @@ prepare_config_files() {
 
     # Git clone config file template
     echo "Clone config template files..."
-    [ -d "/usr/local/private-cloud-templates" ] && rm -rf "/usr/local/private-cloud-templates" && git clone https://github.com/nhanhd2702/private-cloud-templates.git
-    cp "/usr/local/private-cloud-templates/cloud-basic-deployment/libs/multinode/multinode" "$kolla_dir/"
-    cp "/usr/local/private-cloud-templates/cloud-basic-deployment/libs/multinode/globals.yml" "$kolla_dir/"
-    cp -R "/usr/local/private-cloud-templates/config" "$kolla_dir/"
+    cloud_dir="/usr/local"
+    cd $cloud_dir
+    [ -d "private-cloud-templates" ] && rm -rf private-cloud-templates 
+    git clone https://github.com/nhanhd2702/private-cloud-templates.git
+    cp "$cloud_dir/private-cloud-templates/cloud-basic-deployment/libs/multinode/multinode" "$kolla_dir/"
+    cp "$cloud_dir/private-cloud-templates/cloud-basic-deployment/libs/multinode/globals.yml" "$kolla_dir/"
+    cp -R "$cloud_dir/private-cloud-templates/config" "$kolla_dir/"
 
     # Edit inventory file
     echo "Append the servers to the inventory file..."
