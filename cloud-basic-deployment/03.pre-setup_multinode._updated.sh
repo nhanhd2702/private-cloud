@@ -96,7 +96,7 @@ prepare_config_files() {
     git clone https://github.com/nhanhd2702/private-cloud-templates.git
     cp "$cloud_dir/private-cloud-templates/cloud-basic-deployment/libs/multinode/multinode" "$kolla_dir/"
     cp "$cloud_dir/private-cloud-templates/cloud-basic-deployment/libs/multinode/globals.yml" "$kolla_dir/"
-    cp -R "$cloud_dir/private-cloud-templates/config" "$kolla_dir/"
+    cp -R "$cloud_dir/private-cloud-templates/vlan-config/*" "$kolla_dir/"
 
     # Edit inventory file
     echo "Append the servers to the inventory file..."
