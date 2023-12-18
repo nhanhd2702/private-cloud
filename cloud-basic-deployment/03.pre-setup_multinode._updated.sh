@@ -116,7 +116,7 @@ display_completion_message() {
     echo "+---------------------------------------------------------+"
     echo "|                                                         |"
     echo "| Preparation is complete.                                |"
-    echo "| Please check the multinode & globals file before deploy |"
+    echo "| Double-check  MULTINODE & GLOBALS file before deploy    |"
     echo "|                                                         |"
     echo "+---------------------------------------------------------+"
     read -r -p "Press Enter to continue."
